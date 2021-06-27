@@ -85,7 +85,7 @@ def process_data(window):
     save_data(clean_code, code_stats, window)
     display_charts(char_cnt, window)
     display_stats(code_stats, window)
-    window['-TAB CLEAN-'].select()
+    window['-TAB RAW-'].select()
 
 
 def save_data(clean_code, code_stats, window):
@@ -109,10 +109,17 @@ def display_charts(char_cnt, window):
         figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
         figure_canvas_agg.draw()
         figure_canvas_agg.get_tk_widget().pack()
+
         return figure_canvas_agg
 
-    figure = plt.figure(num=1, figsize=(4, 5))
+    if hasattr(display_charts, 'figure'):
+        figure = display_charts.figure
+        plt.clf()
+        display_charts.figure_canvas.get_tk_widget().pack_forget()
+    else:
+        figure = plt.figure(num=1, figsize=(4, 5))
 
+    display_charts.figure = figure
     # histogram
     plt.subplot(211)
     plt.hist(char_cnt)
@@ -130,8 +137,7 @@ def display_charts(char_cnt, window):
     plt.xlabel('code line number')
     plt.ylabel('number of characters')
     plt.tight_layout()
-    draw_figure(window['IMG'].TKCanvas, figure)
-
+    display_charts.figure_canvas = draw_figure(window['IMG'].TKCanvas, figure)
 
 def display_stats(code_stats, window):
     """ display code stats in the window """
@@ -235,7 +241,7 @@ def main():
     click_clipboard(window)
     process_data(window)
 
-    window['-TAB RAW-'].select()        # Start with the raw code tab showing
+    # window['-TAB RAW-'].select()        # Start with the raw code tab showing
 
     # main event loop
     while True:
