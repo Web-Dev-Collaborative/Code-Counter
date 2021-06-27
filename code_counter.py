@@ -1,18 +1,19 @@
 """
-    Count Counter
+    Code Counter
     A program that counts the lines of code and code characters in a code-base
     Author      :   Israel Dryer
     Modified    :   2019-11-01
+    You can find the original repository with the latest updates here:
+    https://github.com/israel-dryer/Code-Counter
 
 """
 import PySimpleGUI as sg
-from os import system
 import statistics as stats
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#import matplotlib
-#matplotlib.use('TkAgg')
 
+# WINDOW_SIZE = (1280, 720)
+WINDOW_SIZE = (None, None)
 
 def clean_data(window):
     """ clean and parse the raw data """
@@ -30,67 +31,70 @@ def clean_data(window):
 
     # remove " multiline comments
     stage2 = []
-    ml_flag = False # multiline comment flag
+    ml_flag = False  # multiline comment flag
     for row in stage1:
-        if row.count(r'"""') == 0 and not ml_flag: # not a comment line
+        if row.count(r'"""') == 0 and not ml_flag:  # not a comment line
             stage2.append(row)
-        elif row.count(r'"""') == 1 and not ml_flag: # starting comment line
+        elif row.count(r'"""') == 1 and not ml_flag:  # starting comment line
             ml_flag = True
             stage2.append(row[:row.find('"""')])
-        elif row.count(r'"""') == 1 and ml_flag: # ending comment line
+        elif row.count(r'"""') == 1 and ml_flag:  # ending comment line
             ml_flag = False
-            stage2.append(row[row.find('"""')+1:])
+            stage2.append(row[row.find('"""') + 1:])
         else:
             continue
 
     # remove ' multiline comments
     stage3 = []
-    ml_flag = False # multiline comment flag
+    ml_flag = False  # multiline comment flag
     for row in stage2:
-        if row.count(r"'''") == 0 and not ml_flag: # not a comment line
+        if row.count(r"'''") == 0 and not ml_flag:  # not a comment line
             stage3.append(row)
-        elif row.count(r"'''") == 1 and not ml_flag: # starting comment line
+        elif row.count(r"'''") == 1 and not ml_flag:  # starting comment line
             ml_flag = True
             stage3.append(row[:row.find("'''")])
-        elif row.count(r"'''") == 1 and ml_flag: # ending comment line
+        elif row.count(r"'''") == 1 and ml_flag:  # ending comment line
             ml_flag = False
-            stage3.append(row[row.find("'''")+1:])
+            stage3.append(row[row.find("'''") + 1:])
         else:
             continue
 
     clean_code = [row for row in stage3 if row not in ('', "''", '""')]
 
     # row and character rounds / for calc stats, histogram, charts
-    char_cnt = [len(row) for row in clean_code] 
+    char_cnt = [len(row) for row in clean_code]
 
     # statistics
+    if len(clean_code) == 0:
+        char_per_line = 1
+    else:
+        char_per_line = sum(char_cnt) // len(clean_code)
     code_stats = {
-        'lines': len(clean_code), 'char_per_line': sum(char_cnt)//len(clean_code), 
-        'count': sum(char_cnt), 'mean': stats.mean(char_cnt), 'median': stats.median(char_cnt), 
+        'lines': len(clean_code), 'char_per_line': char_per_line,
+        'count': sum(char_cnt), 'mean': stats.mean(char_cnt), 'median': stats.median(char_cnt),
         'pstdev': stats.pstdev(char_cnt), 'min': min(char_cnt), 'max': max(char_cnt)}
 
     return clean_code, char_cnt, code_stats
 
 
-
 def process_data(window):
     """ clean and save data ... previous executed manually with submit button """
-    try:
-        clean_code, char_cnt, code_stats = clean_data(window)
-        save_data(clean_code, code_stats, window)
-        display_charts(char_cnt, window)
-        display_stats(code_stats, window)
-        window['T2'].select()
-    except:
-        sg.popup_error('Something is amiss... ', no_titlebar=True)
+    # try:
+    clean_code, char_cnt, code_stats = clean_data(window)
+    save_data(clean_code, code_stats, window)
+    display_charts(char_cnt, window)
+    display_stats(code_stats, window)
+    window['T2'].select()
 
 
 def save_data(clean_code, code_stats, window):
+    window['OUTPUT'].update('\n'.join([row for row in clean_code]))
+    return
     """ save clean code and stats to file """
     with open('output.txt', 'w') as f:
         for row in clean_code:
             f.write(row + '\n')
-    
+
     # update display
     with open('output.txt', 'r') as f:
         window['OUTPUT'].update(f.read())
@@ -123,7 +127,7 @@ def display_charts(char_cnt, window):
     plt.fill_between(x, y)
     plt.title('compressed code line counts')
     plt.xlabel('code line number')
-    plt.ylabel('number of characters') 
+    plt.ylabel('number of characters')
     plt.tight_layout()
     draw_figure(window['IMG'].TKCanvas, figure)
 
@@ -163,7 +167,7 @@ def click_reset(window):
     """ reset the windows and data fields """
     window['INPUT'].update('')
     window['OUTPUT'].update('')
-    reset_stats(window)    
+    reset_stats(window)
     window['T1'].select()
 
 
@@ -178,11 +182,9 @@ def reset_stats(window):
     window['MAX'].update('{:,d}'.format(0))
     window['MIN'].update('{:,d}'.format(0))
 
-
 def btn(name, **kwargs):
     """ create button with default settings """
     return sg.Button(name, size=(16, 1), font=(sg.DEFAULT_FONT, 12), **kwargs)
-
 
 def stat(text, width=10, relief=None, justification='left', key=None):
     elem = sg.Text(text, size=(width, 1), relief=relief, justification=justification, key=key)
@@ -192,13 +194,13 @@ def stat(text, width=10, relief=None, justification='left', key=None):
 def main():
     """ main program and GUI loop """
     sg.ChangeLookAndFeel('BrownBlue')
-    
-    tab1 = sg.Tab('Raw Code', 
-        [[sg.Multiline(key='INPUT', pad=(0, 0), font=(sg.DEFAULT_FONT, 12))]], 
-        background_color='gray', key='T1')
-    tab2 = sg.Tab('Clean Code', 
-        [[sg.Multiline(key='OUTPUT', pad=(0, 0), font=(sg.DEFAULT_FONT, 12))]], 
-        background_color='gray25', key='T2')
+
+    tab1 = sg.Tab('Raw Code',
+                  [[sg.Multiline(key='INPUT', size=(90,30), pad=(0, 0), font=(sg.DEFAULT_FONT, 12))]],
+                  background_color='gray', key='T1')
+    tab2 = sg.Tab('Clean Code',
+                  [[sg.Multiline(key='OUTPUT', size=(90,30), pad=(0, 0), font=(sg.DEFAULT_FONT, 12))]],
+                  background_color='gray25', key='T2')
 
     stat_col = sg.Column([
         [stat('Lines of code'), stat(0, 8, 'sunken', 'right', 'LINES'),
@@ -211,35 +213,33 @@ def main():
          stat('Min'), stat(0, 8, 'sunken', 'right', 'MIN')]], pad=(5, 10), key='STATS')
 
     lf_col = [
-        [btn('Load FILE'), btn('Clipboard'), btn('RESET')], 
+        [btn('Load FILE'), btn('Clipboard'), btn('RESET')],
         [sg.TabGroup([[tab1, tab2]], title_color='black', key='TABGROUP')]]
 
     rt_col = [
         [sg.Text('LOAD a file or PASTE code from Clipboard', pad=(5, 15))],
-        [sg.Text('Statistics', size=(20, 1), pad=((5, 5), (15, 5)), 
-                    font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
-        [stat_col], 
-        [sg.Text('Visualization', size=(20, 1), 
-            font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],        
+        [sg.Text('Statistics', size=(20, 1), pad=((5, 5), (15, 5)),
+                 font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
+        [stat_col],
+        [sg.Text('Visualization', size=(20, 1),
+                 font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
         [sg.Canvas(key='IMG')]]
 
-    layout = [[sg.Column(lf_col, element_justification='left', pad=(0, 10), key='LCOL'), 
-               sg.Column(rt_col, element_justification='center', key='RCOL')]]
+    layout = [[sg.Column(lf_col, element_justification='left', pad=(0, 10), key='LCOL'),
+               sg.Column(rt_col, element_justification='center', key='RCOL')],
+              [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0, 0)),
+               sg.T('Original code written by THE Israel Dryer (github.com/israel-dryer)', pad=(0,0))], [sg.T('Python ver ' + sg.sys.version, font='Default 8', pad=(0, 0))],
+              ]
 
-    window = sg.Window('Code Counter', layout, resizable=True, finalize=True)
-    
-    # set screen size and position
-    x1, y1 = window.get_screen_size()
-    x2 = int(x1/1.6)
-    y2 = int(x2/1.5)
-    window.size = (x2, y2)
-    pos_x = (x1 - x2)//2
-    pos_y = (y1 - y2)//2
-    window.move(pos_x, pos_y)
-    window.maximize()
+    window = sg.Window('Code Counter', layout, resizable=True, size=WINDOW_SIZE, finalize=True,
+                       right_click_menu=[[''], ['Edit Me', 'Exit',]])
 
-    for elem in ['INPUT','OUTPUT','LCOL','TABGROUP']:
+    for elem in ['INPUT', 'OUTPUT', 'LCOL', 'TABGROUP']:
         window[elem].expand(expand_x=True, expand_y=True)
+
+    # assume the clipboard already has data on it
+    click_clipboard(window)
+    process_data(window)
 
     # main event loop
     while True:
@@ -254,7 +254,8 @@ def main():
             process_data(window)
         if event == 'RESET':
             click_reset(window)
-            
+        if event == 'Edit Me':
+            sg.execute_editor(__file__)
 
 if __name__ == '__main__':
     main()
