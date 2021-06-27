@@ -18,7 +18,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 def clean_data(window):
     """ clean and parse the raw data """
-    raw = window.AllKeysDict['INPUT'].DefaultText.split('\n')
+    raw = window.AllKeysDict['-MLINE RAW-'].DefaultText.split('\n')
     # remove whitespace
     data = [row.strip() for row in raw if row.strip()]
 
@@ -85,20 +85,20 @@ def process_data(window):
     save_data(clean_code, code_stats, window)
     display_charts(char_cnt, window)
     display_stats(code_stats, window)
-    window['T2'].select()
+    window['-TAB CLEAN-'].select()
 
 
 def save_data(clean_code, code_stats, window):
-    window['OUTPUT'].update('\n'.join([row for row in clean_code]))
+    window['-MLINE CLEAN-'].update('\n'.join([row for row in clean_code]))
     return
     """ save clean code and stats to file """
-    with open('output.txt', 'w') as f:
-        for row in clean_code:
-            f.write(row + '\n')
-
-    # update display
-    with open('output.txt', 'r') as f:
-        window['OUTPUT'].update(f.read())
+    # with open('output.txt', 'w') as f:
+    #     for row in clean_code:
+    #         f.write(row + '\n')
+    #
+    # # update display
+    # with open('output.txt', 'r') as f:
+    #     window['-MLINE CLEAN-'].update(f.read())
 
 
 def display_charts(char_cnt, window):
@@ -152,24 +152,24 @@ def click_file(window):
         return
     with open(filename) as f:
         raw = f.read()
-        window['INPUT'].update(raw)
+        window['-MLINE RAW-'].update(raw)
 
 
 def click_clipboard(window):
     """ get data from clipboard and paste to input """
     try:
-        clip = window['INPUT'].Widget.clipboard_get()
-        window['INPUT'].update(clip)
+        clip = window['-MLINE RAW-'].Widget.clipboard_get()
+        window['-MLINE RAW-'].update(clip)
     except:
         sg.popup_error('Clipboard is empty', no_titlebar=True)
 
 
 def click_reset(window):
     """ reset the windows and data fields """
-    window['INPUT'].update('')
-    window['OUTPUT'].update('')
+    window['-MLINE RAW-'].update('')
+    window['-MLINE CLEAN-'].update('')
     reset_stats(window)
-    window['T1'].select()
+    window['-TAB RAW-'].select()
 
 
 def reset_stats(window):
@@ -185,23 +185,20 @@ def reset_stats(window):
 
 def btn(name, **kwargs):
     """ create button with default settings """
-    return sg.Button(name, size=(16, 1), font=(sg.DEFAULT_FONT, 12), **kwargs)
+    return sg.Button(name, size=(16, 1), font='Default 12', **kwargs)
 
 def stat(text, width=10, relief=None, justification='left', key=None):
-    elem = sg.Text(text, size=(width, 1), relief=relief, justification=justification, key=key)
-    return elem
+    return sg.Text(text, size=(width, 1), relief=relief, justification=justification, key=key)
 
 
 def main():
     """ main program and GUI loop """
-    sg.ChangeLookAndFeel('BrownBlue')
+    sg.theme('BrownBlue')
 
     tab1 = sg.Tab('Raw Code',
-                  [[sg.Multiline(key='INPUT', size=(90,30), pad=(0, 0), font=('Courier', 12))]],
-                  background_color='gray', key='T1')
+                  [[sg.Multiline(key='-MLINE RAW-', size=(90,30), pad=(0, 0), font='Courier 12')]], background_color='gray', key='-TAB RAW-')
     tab2 = sg.Tab('Clean Code',
-                  [[sg.Multiline(key='OUTPUT', size=(90,30), pad=(0, 0), font=('Courier', 12))]],
-                  background_color='gray25', key='T2')
+                  [[sg.Multiline(key='-MLINE CLEAN-', size=(90,30), pad=(0, 0), font='Courier 12')]], background_color='gray25', key='-TAB CLEAN-')
 
     stat_col = sg.Column([
         [stat('Lines of code'), stat(0, 8, 'sunken', 'right', 'LINES'),
@@ -211,48 +208,50 @@ def main():
         [stat('Median'), stat(0, 8, 'sunken', 'right', 'MEDIAN'),
          stat('PStDev'), stat(0, 8, 'sunken', 'right', 'PSTDEV')],
         [stat('Max'), stat(0, 8, 'sunken', 'right', 'MAX'),
-         stat('Min'), stat(0, 8, 'sunken', 'right', 'MIN')]], pad=(5, 10), key='STATS')
+         stat('Min'), stat(0, 8, 'sunken', 'right', 'MIN')]], pad=(5, 10))
 
     lf_col = [
         [btn('Load FILE'), btn('Clipboard'), btn('RESET')],
-        [sg.TabGroup([[tab1, tab2]], title_color='black', key='TABGROUP')]]
+        [sg.TabGroup([[tab1, tab2]], title_color='black', key='-TAB GROUP-')]]
 
     rt_col = [
         [sg.Text('LOAD a file or PASTE code from Clipboard', pad=(5, 15))],
-        [sg.Text('Statistics', size=(20, 1), pad=((5, 5), (15, 5)), font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
+        [sg.Text('Statistics', size=(20, 1), pad=((5, 5), (15, 5)), font='Default 14 bold', justification='center')],
         [stat_col],
-        [sg.Text('Visualization', size=(20, 1), font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
+        [sg.Text('Visualization', size=(20, 1), font='Default 14 bold', justification='center')],
         [sg.Canvas(key='IMG')]]
 
-    layout = [[sg.Column(lf_col, element_justification='left', pad=(0, 10), key='LCOL', expand_x=True, expand_y=True),
-               sg.Column(rt_col, element_justification='center', key='RCOL')],
+    layout = [[sg.Column(lf_col, element_justification='left', pad=(0, 10), expand_x=True, expand_y=True),
+               sg.Column(rt_col, element_justification='center')],
               [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0, 0)),
-               sg.T('Original code written by THE Israel Dryer (github.com/israel-dryer)', pad=(0,0))], [sg.T('Python ver ' + sg.sys.version, font='Default 8', pad=(0, 0))],
-              ]
+               sg.T('Original code written by THE Israel Dryer (github.com/israel-dryer)', pad=(0,0))], [sg.T('Python ver ' + sg.sys.version, font='Default 8', pad=(0, 0))]]
 
-    window = sg.Window('Code Counter', layout, resizable=True, finalize=True, right_click_menu=[[''], ['Edit Me', 'Exit',]])
+    window = sg.Window('Code Counter', layout, resizable=True, finalize=True, right_click_menu=['', ['Edit Me', 'Exit',]])
 
     # Love those anti-patterns - make these elements expand and fill
-    [window[elem].expand(expand_x=True, expand_y=True) for elem in ['INPUT', 'OUTPUT', 'TABGROUP']]
+    [window[elem].expand(expand_x=True, expand_y=True) for elem in ['-MLINE RAW-', '-MLINE CLEAN-', '-TAB GROUP-']]
 
     # assume the clipboard already has data on it
     click_clipboard(window)
     process_data(window)
 
+    window['-TAB RAW-'].select()        # Start with the raw code tab showing
+
     # main event loop
     while True:
         event, values = window.read()
-        if event is None:
+
+        if event in (sg.WIN_CLOSED, 'Exit'):
             break
-        if event == 'Load FILE':
+        elif event == 'Load FILE':
             click_file(window)
             process_data(window)
-        if event == 'Clipboard':
+        elif event == 'Clipboard':
             click_clipboard(window)
             process_data(window)
-        if event == 'RESET':
+        elif event == 'RESET':
             click_reset(window)
-        if event == 'Edit Me':
+        elif event == 'Edit Me':
             sg.execute_editor(__file__)
 
 if __name__ == '__main__':
