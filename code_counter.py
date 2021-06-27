@@ -6,14 +6,15 @@
     You can find the original repository with the latest updates here:
     https://github.com/israel-dryer/Code-Counter
 
+    Additional modifications.. (hacks?) by mike of PySimpleGUI
+    Copyright 2021 IDryer, PySimpleGUI
 """
+
 import PySimpleGUI as sg
 import statistics as stats
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# WINDOW_SIZE = (1280, 720)
-WINDOW_SIZE = (None, None)
 
 def clean_data(window):
     """ clean and parse the raw data """
@@ -225,17 +226,16 @@ def main():
                  font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
         [sg.Canvas(key='IMG')]]
 
-    layout = [[sg.Column(lf_col, element_justification='left', pad=(0, 10), key='LCOL'),
+    layout = [[sg.Column(lf_col, element_justification='left', pad=(0, 10), key='LCOL', expand_x=True, expand_y=True),
                sg.Column(rt_col, element_justification='center', key='RCOL')],
               [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0, 0)),
                sg.T('Original code written by THE Israel Dryer (github.com/israel-dryer)', pad=(0,0))], [sg.T('Python ver ' + sg.sys.version, font='Default 8', pad=(0, 0))],
               ]
 
-    window = sg.Window('Code Counter', layout, resizable=True, size=WINDOW_SIZE, finalize=True,
-                       right_click_menu=[[''], ['Edit Me', 'Exit',]])
+    window = sg.Window('Code Counter', layout, resizable=True, finalize=True, right_click_menu=[[''], ['Edit Me', 'Exit',]])
 
-    for elem in ['INPUT', 'OUTPUT', 'LCOL', 'TABGROUP']:
-        window[elem].expand(expand_x=True, expand_y=True)
+    # Love those anti-patterns - make these elements expand and fill
+    [window[elem].expand(expand_x=True, expand_y=True) for elem in ['INPUT', 'OUTPUT', 'TABGROUP']]
 
     # assume the clipboard already has data on it
     click_clipboard(window)
