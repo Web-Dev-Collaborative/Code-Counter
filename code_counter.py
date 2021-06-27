@@ -197,10 +197,10 @@ def main():
     sg.ChangeLookAndFeel('BrownBlue')
 
     tab1 = sg.Tab('Raw Code',
-                  [[sg.Multiline(key='INPUT', size=(90,30), pad=(0, 0), font=(sg.DEFAULT_FONT, 12))]],
+                  [[sg.Multiline(key='INPUT', size=(90,30), pad=(0, 0), font=('Courier', 12))]],
                   background_color='gray', key='T1')
     tab2 = sg.Tab('Clean Code',
-                  [[sg.Multiline(key='OUTPUT', size=(90,30), pad=(0, 0), font=(sg.DEFAULT_FONT, 12))]],
+                  [[sg.Multiline(key='OUTPUT', size=(90,30), pad=(0, 0), font=('Courier', 12))]],
                   background_color='gray25', key='T2')
 
     stat_col = sg.Column([
@@ -219,11 +219,9 @@ def main():
 
     rt_col = [
         [sg.Text('LOAD a file or PASTE code from Clipboard', pad=(5, 15))],
-        [sg.Text('Statistics', size=(20, 1), pad=((5, 5), (15, 5)),
-                 font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
+        [sg.Text('Statistics', size=(20, 1), pad=((5, 5), (15, 5)), font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
         [stat_col],
-        [sg.Text('Visualization', size=(20, 1),
-                 font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
+        [sg.Text('Visualization', size=(20, 1), font=(sg.DEFAULT_FONT, 14, 'bold'), justification='center')],
         [sg.Canvas(key='IMG')]]
 
     layout = [[sg.Column(lf_col, element_justification='left', pad=(0, 10), key='LCOL', expand_x=True, expand_y=True),
